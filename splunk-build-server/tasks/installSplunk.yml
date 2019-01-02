@@ -1,0 +1,72 @@
+---
+
+# This file installs Splunk
+
+- name: Check If Splunk is Already Installed
+  yum:
+    name: splunk
+    state: present
+  register: splunk_installed
+  ignore_errors: true
+
+- name: Copy Splunk Binary File
+  copy:
+    src: "{{SplunkRPMName}}"
+    dest: /tmp/splunk-7.1.0-2e75b3406c5b-linux-2.6-x86_64.rpm
+    owner: root
+    group: root
+    mode: 0744
+  when: splunk_installed is failed
+
+- name: Verify Splunk Binary File Exists
+  stat:
+    path: /tmp/splunk-7.1.0-2e75b3406c5b-linux-2.6-x86_64.rpm
+  register: splunk_binary_present
+
+- name: Install Splunk
+  yum:
+    name: /tmp/splunk-7.1.0-2e75b3406c5b-linux-2.6-x86_64.rpm
+    state: installed
+  when: splunk_binary_present.stat.exists == true
+
+- name: Configure Splunk user-seed.conf File
+  template:
+    src: user-seed.conf.j2
+    dest: /opt/splunk/etc/system/default/user-seed.conf
+    owner: splunk
+    group: splunk
+    mode: 0700
+  when: splunk_installed is failed
+
+- name: Set Permissions on /opt/splunk
+  file:
+    name: /opt/splunk
+    recurse: yes
+    owner: splunk
+    group: splunk
+
+- name: Stop the "Change Password" Prompt on Splunk UI
+  file:
+    path: /opt/splunk/etc/.ui_login
+    owner: splunk
+    group: splunk
+    state: touch
+
+- name: Start Splunk For First Time
+  become_user: splunk
+  command: /opt/splunk/bin/splunk start --accept-license
+  when: splunk_installed is failed
+
+- name: Enable Splunk to auto-start on boot
+  command: /opt/splunk/bin/splunk enable boot-start -user splunk
+  when: splunk_installed is failed
+
+- name: Verify Splunk user-seed.conf File is Removed
+  file:
+    path: /opt/splunk/etc/system/default/user-seed.conf
+    state: absent
+
+- name: Verify Splunk Binary File is Removed
+  file:
+    path: /tmp/splunk-7.1.0-2e75b3406c5b-linux-2.6-x86_64.rpm
+    state: absent

@@ -1,0 +1,23 @@
+---
+
+# This file disables transparent huge tables on servers
+
+- name: Check if THP Service is Enabled
+  stat:
+    path: /etc/systemd/system/disable-thp.service
+  register: THP_Disabled
+
+- name: Copy Disable THP Service File Over
+  copy:
+    src: files/disable-thp.service
+    dest: /etc/systemd/system/disable-thp.service
+    owner: root
+    group: root
+    mode: 0744
+  when: THP_Disabled.stat.exists == false
+
+- name: Enable Disable THP Service
+  service:
+    name: disable-thp
+    enabled: yes
+  notify: Restart Machine

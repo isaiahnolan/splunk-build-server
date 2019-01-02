@@ -1,0 +1,27 @@
+---
+
+# Handlers used in the various tasks
+
+- name: Reload Firewall
+  command: firewall-cmd --reload
+  ignore_errors: true
+
+- name: Restart Splunk
+  become_user: splunk
+  command: "/opt/splunk/bin/splunk restart"
+
+- name: Restart Machine
+  command: /sbin/shutdown -r +1
+  async: 0
+  poll: 0
+  ignore_errors: true
+  notify: Wait for Reboot
+
+- name: Wait for Reboot
+  wait_for:
+    host="{{ ansible_host }}"
+    port=22
+    delay=60
+    timeout=600
+  delegate_to: localhost
+  become: false

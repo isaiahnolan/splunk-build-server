@@ -1,0 +1,41 @@
+---
+
+- name: Add Splunk Web Service to Trusted Zone
+  firewalld:
+    zone: trusted
+    port: '{{ item }}'
+    permanent: true
+    state: enabled
+  with_items:
+    - 8000/tcp
+  notify: Reload Firewall
+
+- name: Add Splunk Ingest Port to Trusted Zone
+  firewalld:
+    zone: trusted
+    port: '{{ item }}'
+    permanent: true
+    state: enabled
+  with_items:
+    - 9997/tcp
+  notify: Reload Firewall
+
+- name: Add Syslog TCP to Trusted Zone
+  firewalld:
+    zone: trusted
+    port: '{{ item }}'
+    permanent: true
+    state: enabled
+  with_items:
+    - 514/tcp
+  notify: Reload Firewall
+
+- name: Add Syslog UDP to Trusted Zone
+  firewalld:
+    zone: trusted
+    port: '{{ item }}'
+    permanent: true
+    state: enabled
+  with_items:
+    - 514/udp
+  notify: Reload Firewall
